@@ -93,6 +93,7 @@ magEl.value = saved.mag || '6';
 showMinutesEl.value = saved.showMinutes || '5';
 const freshDefaults = saved.defaultsRev !== 2;
 const freshSubShade = saved.defaultsRev !== 3;
+const freshMeteors = saved.defaultsRev !== 4;
 shadeEl.value = saved.shade ?? '0';
 shadeAutoEl.checked = freshDefaults ? true : saved.shadeAuto === true;
 manualShade = shadeEl.value;
@@ -104,7 +105,7 @@ linesEl.checked = saved.lines !== false;
 namesEl.checked = saved.names !== false;
 altitudeEl.checked = saved.altitude !== false;
 infoEl.checked = saved.info !== false;
-meteorsEl.checked = freshDefaults ? saved.meteorsMany === true : saved.meteors === true;
+meteorsEl.checked = freshMeteors ? true : saved.meteors === true;
 $('volume').value = saved.volume ?? 0.7;
 $('loop').checked = saved.loop !== false;
 $('shuffle').checked = saved.shuffle === true;
@@ -114,7 +115,7 @@ whenDateEl.value = ymdString(jstParts(new Date()));
 applyPlace(TOKYO.lat, TOKYO.lon, TOKYO.name);
 updateLabels();
 updatePreset();
-if (freshDefaults || freshSubShade) saveSettings();
+if (freshDefaults || freshSubShade || freshMeteors) saveSettings();
 
 const audio = new Audio();
 audio.volume = Number($('volume').value);
@@ -174,7 +175,7 @@ function saveSettings() {
     altitude: altitudeEl.checked,
     info: infoEl.checked,
     meteors: meteorsEl.checked,
-    defaultsRev: 3,
+    defaultsRev: 4,
     volume: $('volume').value,
     loop: $('loop').checked,
     shuffle: $('shuffle').checked,
