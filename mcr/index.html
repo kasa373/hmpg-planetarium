@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>星空</title>
+  <link rel="stylesheet" href="css/app.css?v=8">
+</head>
+<body>
+  <canvas id="sky" aria-label="星空"></canvas>
+  <div id="greet" aria-live="polite"></div>
+  <div id="thanks" aria-hidden="true">With heartfelt thanks</div>
+  <div id="caption" aria-live="polite" aria-hidden="true">
+    <p id="captionText"></p>
+    <p id="captionCredit">出典: ウィキペディア（CC BY-SA）</p>
+  </div>
+  <div id="globeWrap">
+    <canvas id="globe" aria-label="現在地の地球儀"></canvas>
+  </div>
+  <div id="hud">
+    <p id="hudText">星空を読み込んでいます</p>
+    <div id="float">
+      <div class="hudRow">
+        <button id="zoomOut" type="button" aria-label="ズームアウト">−</button>
+        <button id="zoomIn" type="button" aria-label="ズームイン">＋</button>
+        <button id="homeView" class="icon" type="button" aria-label="今の時刻から、南向きに戻す">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="1.35" fill="currentColor"/>
+            <path d="M12 2.4v3.3M12 18.3v3.3M2.4 12h3.3M18.3 12h3.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="zenith" type="button">天頂</button>
+        <button id="lookN" type="button">北</button>
+        <button id="lookE" type="button">東</button>
+        <button id="lookS" type="button">南</button>
+        <button id="lookW" type="button">西</button>
+        <button id="playHud" class="mark" type="button" aria-label="再生" title="再生">▶</button>
+        <button id="fullHud" class="mark" type="button" aria-label="全画面" title="全画面">⛶</button>
+        <button id="panelToggle" type="button">操作</button>
+        <button id="hideButtons" type="button" aria-label="ボタンを隠す">>></button>
+      </div>
+      <button id="showButtons" type="button" aria-label="ボタンを戻す"><<</button>
+    </div>
+  </div>
+  <form id="panel">
+    <header>
+      <h1>星空</h1>
+    </header>
+
+    <fieldset>
+      <legend>場所</legend>
+      <label>選び方
+        <select id="placeKind">
+          <option value="geo">現在地</option>
+          <option value="japan">日本の都市</option>
+          <option value="world">世界の都市</option>
+        </select>
+      </label>
+      <div id="cityPlace" hidden>
+        <label>都市
+          <select id="city"></select>
+        </label>
+      </div>
+      <div id="geoPlace">
+        <div class="row">
+          <button id="locate" type="button">現在地を取得</button>
+        </div>
+        <p id="locateNote" class="note"></p>
+      </div>
+      <p id="placeName" class="note"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>日時</legend>
+      <label>日付
+        <input id="whenDate" type="date">
+      </label>
+      <div class="choice" id="hours">
+        <label><input type="radio" name="hour" value="17" checked> 17時（夕）</label>
+        <label><input type="radio" name="hour" value="23"> 23時（夜）</label>
+        <label><input type="radio" name="hour" value="5"> 5時（朝）</label>
+        <label><input type="radio" name="hour" value="11"> 11時（昼）</label>
+      </div>
+      <div class="row">
+        <button id="whenNow" type="button">現在時間</button>
+      </div>
+      <p id="nowNote" class="note" hidden></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>再生</legend>
+      <label>12時間を見る時間（分）
+        <input id="showMinutes" type="number" min="1" max="720" step="1" value="5">
+      </label>
+      <div class="row presets" id="presets">
+        <button type="button" data-min="3">3</button>
+        <button type="button" data-min="5">5</button>
+        <button type="button" data-min="10">10</button>
+        <button type="button" data-min="30">30</button>
+        <button type="button" data-min="720">12時間（実時間）</button>
+      </div>
+      <div class="row">
+        <button id="play" class="mark" type="button" aria-label="再生" title="再生">▶</button>
+        <button id="restart" type="button">最初に戻す</button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>表示</legend>
+      <label>どこまで出すか <span id="magLabel">6等星</span>
+        <input id="mag" type="range" min="3" max="8" step="1" value="6">
+      </label>
+      <label class="check"><input id="showLines" type="checkbox" checked> 星座線</label>
+      <label class="check"><input id="showNames" type="checkbox" checked> 星座名</label>
+      <label class="check"><input id="showAltitude" type="checkbox" checked> 高度線</label>
+      <label class="check"><input id="showInfo" type="checkbox" checked> 現在地情報</label>
+      <label class="check"><input id="showMeteors" type="checkbox"> 流星</label>
+      <label class="check"><input id="showSubs" type="checkbox" checked> 字幕有り</label>
+      <p id="subNote" class="note"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>音楽（この端末の中だけ）</legend>
+      <div class="row">
+        <button id="pickFiles" type="button">曲を選ぶ</button>
+        <button id="pickDir" type="button" hidden>フォルダ</button>
+        <button id="musicToggle" type="button">再生</button>
+      </div>
+      <input id="files" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" multiple hidden>
+      <label>音量
+        <input id="volume" type="range" min="0" max="1" step="0.01" value="0.7">
+      </label>
+      <label class="check"><input id="loop" type="checkbox" checked> 繰り返し</label>
+      <label class="check"><input id="shuffle" type="checkbox"> シャッフル</label>
+      <p id="trackName" class="note">曲がまだありません</p>
+    </fieldset>
+
+    <div class="shadeRow">
+      <div class="shadeHead">
+        <span>背景の濃さ <span id="shadeLabel">0%</span></span>
+        <label class="check"><input id="shadeAuto" type="checkbox" checked> 自動</label>
+      </div>
+      <input id="shade" type="range" min="-30" max="30" step="1" value="0">
+    </div>
+    <div class="shadeRow">
+      <div class="shadeHead">
+        <span>字幕の濃さ <span id="subShadeLabel">0%</span></span>
+        <label class="check"><input id="subShadeAuto" type="checkbox" checked> 自動</label>
+      </div>
+      <input id="subShade" type="range" min="-30" max="30" step="1" value="0">
+    </div>
+    <div class="choice sizeChoice">
+      <span>字幕の大きさ</span>
+      <label><input type="radio" name="subSize" value="large"> 大</label>
+      <label><input type="radio" name="subSize" value="medium" checked> 中</label>
+      <label><input type="radio" name="subSize" value="small"> 小</label>
+    </div>
+    <label id="starSizeRow">星の大きさ <span id="starSizeLabel">3倍</span>
+      <input id="starSize" type="range" min="1" max="5" step="0.1" value="3">
+    </label>
+    <div class="row">
+      <button id="full" type="button">全画面</button>
+      <button id="hide" type="button">操作を隠す</button>
+    </div>
+    <p class="credit">星: Hipparcos / Tycho-2（ESA）。星座線: Olaf Frohn, d3-celestial（BSD）。陸地: Natural Earth。</p>
+  </form>
+  <script type="module" src="js/app.js?v=18"></script>
+</body>
+</html>
