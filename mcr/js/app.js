@@ -343,7 +343,12 @@ function syncPlayButtons() {
     btn.classList.toggle('playing', playing);
   }
   document.body.classList.toggle('playing', playing);
-  if (!playing) restorePanelAfterPlay();
+  if (!playing) {
+    restorePanelAfterPlay();
+    showCursor();
+  } else {
+    armCursorHide();
+  }
 }
 
 function shadeNumber(lat, lst, sun) {
@@ -1156,11 +1161,14 @@ function showCursor() {
   document.body.classList.remove('cursor-idle');
   clearTimeout(cursorTimer);
 }
+function cursorCanHide() {
+  return playing || document.body.classList.contains('buttons-hidden');
+}
 function armCursorHide() {
   showCursor();
-  if (!document.body.classList.contains('buttons-hidden')) return;
+  if (!cursorCanHide()) return;
   cursorTimer = setTimeout(() => {
-    if (document.body.classList.contains('buttons-hidden')) document.body.classList.add('cursor-idle');
+    if (cursorCanHide()) document.body.classList.add('cursor-idle');
   }, 2000);
 }
 $('hideButtons').addEventListener('click', () => {
@@ -1173,7 +1181,7 @@ $('showButtons').addEventListener('click', () => {
 });
 window.addEventListener('pointermove', (e) => {
   if (e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
-  if (document.body.classList.contains('buttons-hidden')) armCursorHide();
+  if (cursorCanHide()) armCursorHide();
 });
 
 $('pickFiles').addEventListener('click', () => $('files').click());

@@ -28,8 +28,8 @@ body.buttons-hidden #float .hudRow { display: none; }
 
 body.buttons-hidden #showButtons { display: inline-block; }
 
-body.buttons-hidden.cursor-idle,
-body.buttons-hidden.cursor-idle * { cursor: none !important; }
+body.cursor-idle,
+body.cursor-idle * { cursor: none !important; }
 
 #sky {
   position: fixed;
