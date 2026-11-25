@@ -5,9 +5,10 @@ const LAUNCH = 1000;
 const RISE_MS = 1300;
 const OPEN_MS = 700;
 const BLOOM_MS = 3900;
-const TEXT_HOLD_END = 7000;
-const DONE = 9500;
 const OPENING_FADE = 10800;
+const THANKS_TEXT_ON = LAUNCH + RISE_MS + OPEN_MS;
+const THANKS_TEXT_OFF = 12200;
+const THANKS_DONE = 15000;
 
 const SHELL_COLORS = [
   [255, 196, 48],
@@ -30,6 +31,7 @@ const WAVE_LOOK = {
   2: { peaks: [0.36, 0.32], reach: [200, 210] },
   3: { peaks: [0.40, 0.22, 0.38], reach: [170, 220, 180] },
   5: { peaks: [0.42, 0.26, 0.50, 0.24, 0.40], reach: [140, 160, 190, 155, 135] },
+  7: { peaks: [0.40, 0.24, 0.36, 0.18, 0.38, 0.26, 0.42], reach: [145, 160, 140, 175, 150, 165, 135] },
 };
 
 export function createNovemberThanks(canvas, textEl) {
@@ -180,31 +182,16 @@ export function createNovemberThanks(canvas, textEl) {
   }
 
   function thanksShells() {
-    const { ground, h } = band();
-    const hidden = document.body.classList.contains('panel-hidden')
-      || document.body.classList.contains('buttons-hidden');
-    const w = window.innerWidth;
-    const panelRight = hidden ? 24 : 12 + Math.min(420, w - 24);
-    const globeLeft = w - (w <= 720 ? 140 : 220);
-    const left = panelRight + 56;
-    const right = Math.max(left + 160, globeLeft - 28);
-    const peaks = [0.40, 0.27, 0.42];
-    const reach = [252, 315, 234];
-    return peaks.map((peak, i) => ({
-      x: left + (right - left) * (0.16 + i * 0.34),
-      y0: ground + (i === 1 ? 10 : 0),
-      y1: Math.min(ground - 24, Math.max(reach[i] + 24, h * peak)),
-      color: SHELL_COLORS[i],
-      hue: i,
-      reach: reach[i],
-      sparks: null,
-      launchAt: LAUNCH,
-    }));
+    return [
+      ...waveShells(3, 1000, 0),
+      ...waveShells(5, 4200, 3),
+      ...waveShells(7, 7400, 8),
+    ];
   }
 
   function syncText(show, elapsed) {
     if (!textEl) return;
-    if (elapsed >= LAUNCH + RISE_MS + OPEN_MS && elapsed < TEXT_HOLD_END) {
+    if (elapsed >= THANKS_TEXT_ON && elapsed < THANKS_TEXT_OFF) {
       if (!show.textOn) {
         show.textOn = true;
         textEl.classList.add('show');
@@ -212,7 +199,7 @@ export function createNovemberThanks(canvas, textEl) {
       }
       return;
     }
-    if (elapsed >= TEXT_HOLD_END && show.textOn) {
+    if (elapsed >= THANKS_TEXT_OFF && show.textOn) {
       show.textOn = false;
       textEl.classList.remove('show');
       textEl.setAttribute('aria-hidden', 'true');
@@ -237,7 +224,7 @@ export function createNovemberThanks(canvas, textEl) {
 
   function alive(show, now) {
     const elapsed = now - show.t0;
-    if (show.thanks && elapsed < DONE) return true;
+    if (show.thanks && elapsed < THANKS_DONE) return true;
     return show.shells.some((shell) => elapsed < shell.launchAt + RISE_MS + BLOOM_MS);
   }
 

@@ -6,7 +6,7 @@ import { CITIES } from './cities.js';
 import { isLand, prepareLand } from './land.js';
 import { createGlobe } from './globe.js';
 import { createRenderer, decodeStars } from './render.js';
-import { createNovemberThanks } from './fireworks.js?v=5';
+import { createNovemberThanks } from './fireworks.js?v=6';
 
 const GREET = {
   1: 'Happy New Year.',
