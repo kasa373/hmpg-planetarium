@@ -811,7 +811,10 @@ function playGreeting() {
   document.body.classList.add('opening-sky');
   const opening = novemberThanks.startOpening();
   if (opening == null) document.body.classList.remove('opening-sky');
-  else setTimeout(() => document.body.classList.remove('opening-sky'), opening.end);
+  else setTimeout(() => {
+    document.body.classList.remove('opening-sky');
+    document.body.classList.add('panel-hidden');
+  }, opening.end);
   const fadeAt = opening == null ? visibleAt + 4000 : Math.max(visibleAt + 4000, opening.fade);
   setTimeout(() => root.classList.add('out'), fadeAt);
   setTimeout(() => root.remove(), fadeAt + 2000);
