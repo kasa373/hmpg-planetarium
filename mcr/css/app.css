@@ -20,6 +20,10 @@ html, body {
 
 body.panel-hidden #panel { display: none; }
 
+body.opening-sky #panel,
+body.opening-sky #hudText,
+body.opening-sky #globeWrap { display: none; }
+
 #showButtons { display: none; }
 
 body.buttons-hidden #panel,

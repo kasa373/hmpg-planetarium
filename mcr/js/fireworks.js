@@ -45,10 +45,12 @@ export function createNovemberThanks(canvas, textEl) {
   function band() {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const hidden = document.body.classList.contains('panel-hidden')
+    const opening = document.body.classList.contains('opening-sky');
+    const hidden = opening
+      || document.body.classList.contains('panel-hidden')
       || document.body.classList.contains('buttons-hidden');
     const panelRight = hidden ? 24 : 12 + Math.min(420, w - 24);
-    const globeLeft = w - (w <= 720 ? 140 : 220);
+    const globeLeft = opening ? w - 24 : w - (w <= 720 ? 140 : 220);
     const left = panelRight + 36;
     const right = Math.max(left + 180, globeLeft - 16);
     return { left, right, ground: h * 0.82, h };
@@ -231,19 +233,21 @@ export function createNovemberThanks(canvas, textEl) {
   return {
     startOpening() {
       if (!NOVEMBER_THANKS || !november()) return null;
-      if (shows.some((show) => show.kind === 'opening')) return OPENING_FADE;
+      if (shows.some((show) => show.kind === 'opening')) return { fade: OPENING_FADE, end: OPENING_FADE };
+      const shells = [
+        ...waveShells(2, 500, 0),
+        ...waveShells(3, 3400, 2),
+        ...waveShells(5, 6600, 5),
+      ];
       shows.push({
         kind: 'opening',
         t0: performance.now(),
-        shells: [
-          ...waveShells(2, 500, 0),
-          ...waveShells(3, 3400, 2),
-          ...waveShells(5, 6600, 5),
-        ],
+        shells,
         thanks: false,
         textOn: false,
       });
-      return OPENING_FADE;
+      const last = Math.max(...shells.map((shell) => shell.launchAt));
+      return { fade: OPENING_FADE, end: last + RISE_MS + BLOOM_MS };
     },
     start() {
       if (!NOVEMBER_THANKS || !november() || !textEl) return;

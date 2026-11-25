@@ -6,7 +6,7 @@ import { CITIES } from './cities.js';
 import { isLand, prepareLand } from './land.js';
 import { createGlobe } from './globe.js';
 import { createRenderer, decodeStars } from './render.js';
-import { createNovemberThanks } from './fireworks.js?v=6';
+import { createNovemberThanks } from './fireworks.js?v=7';
 
 const GREET = {
   1: 'Happy New Year.',
@@ -808,8 +808,11 @@ function playGreeting() {
   if (reduce) spans.forEach((span) => span.classList.add('on'));
   else spans.forEach((span, i) => setTimeout(() => span.classList.add('on'), i * 1000));
   const visibleAt = reduce ? 0 : spans.length * 1000;
-  const fireworksHold = novemberThanks.startOpening();
-  const fadeAt = fireworksHold == null ? visibleAt + 4000 : Math.max(visibleAt + 4000, fireworksHold);
+  document.body.classList.add('opening-sky');
+  const opening = novemberThanks.startOpening();
+  if (opening == null) document.body.classList.remove('opening-sky');
+  else setTimeout(() => document.body.classList.remove('opening-sky'), opening.end);
+  const fadeAt = opening == null ? visibleAt + 4000 : Math.max(visibleAt + 4000, opening.fade);
   setTimeout(() => root.classList.add('out'), fadeAt);
   setTimeout(() => root.remove(), fadeAt + 2000);
 }
