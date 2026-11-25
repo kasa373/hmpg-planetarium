@@ -2,10 +2,12 @@
 export const NOVEMBER_THANKS = true;
 
 const LAUNCH = 1000;
-const RISE_END = 2300;
-const BLOOM = 3000;
+const RISE_MS = 1300;
+const OPEN_MS = 700;
+const BLOOM_MS = 3900;
 const TEXT_HOLD_END = 7000;
 const DONE = 9500;
+const OPENING_FADE = 10800;
 
 const SHELL_COLORS = [
   [255, 196, 48],
@@ -24,35 +26,30 @@ const BLOOM_COLORS = [
   [255, 110, 186],
 ];
 
+const WAVE_LOOK = {
+  2: { peaks: [0.36, 0.32], reach: [200, 210] },
+  3: { peaks: [0.40, 0.22, 0.38], reach: [170, 220, 180] },
+  5: { peaks: [0.42, 0.26, 0.50, 0.24, 0.40], reach: [140, 160, 190, 155, 135] },
+};
+
 export function createNovemberThanks(canvas, textEl) {
-  let show = null;
+  const shows = [];
 
   function november() {
     const t = new Date(Date.now() + 9 * 3600000);
     return t.getUTCFullYear() === 2026 && t.getUTCMonth() === 10;
   }
 
-  function layout() {
+  function band() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const hidden = document.body.classList.contains('panel-hidden')
       || document.body.classList.contains('buttons-hidden');
     const panelRight = hidden ? 24 : 12 + Math.min(420, w - 24);
     const globeLeft = w - (w <= 720 ? 140 : 220);
-    const left = panelRight + 56;
-    const right = Math.max(left + 160, globeLeft - 28);
-    const ground = h * 0.82;
-    const peaks = [0.40, 0.27, 0.42];
-    const reach = [252, 315, 234];
-    return peaks.map((peak, i) => ({
-      x: left + (right - left) * (0.16 + i * 0.34),
-      y0: ground + (i === 1 ? 10 : 0),
-      y1: Math.min(ground - 24, Math.max(reach[i] + 24, h * peak)),
-      color: SHELL_COLORS[i],
-      hue: i,
-      reach: reach[i],
-      sparks: null,
-    }));
+    const left = panelRight + 36;
+    const right = Math.max(left + 180, globeLeft - 16);
+    return { left, right, ground: h * 0.82, h };
   }
 
   function bloomColor(shell, i, inner) {
@@ -96,7 +93,7 @@ export function createNovemberThanks(canvas, textEl) {
 
   function bloomPoint(shell, spark, ms) {
     const age = ms / 1000;
-    const open = Math.min(1, ms / (BLOOM - RISE_END));
+    const open = Math.min(1, ms / OPEN_MS);
     const ease = 1 - (1 - open) ** 2;
     const fall = Math.max(0, age - 0.9);
     const dist = spark.speed * ease;
@@ -122,8 +119,8 @@ export function createNovemberThanks(canvas, textEl) {
     ctx.fill();
   }
 
-  function drawRise(ctx, shell, elapsed, scale) {
-    const p = Math.min(1, (elapsed - LAUNCH) / (RISE_END - LAUNCH));
+  function drawRise(ctx, shell, local, scale) {
+    const p = Math.min(1, local / RISE_MS);
     const e = 1 - (1 - p) ** 3;
     const head = risePoint(shell, e);
     const tail = risePoint(shell, Math.max(0, e - 0.16));
@@ -136,7 +133,7 @@ export function createNovemberThanks(canvas, textEl) {
     ctx.lineTo(head.x * scale, head.y * scale);
     ctx.stroke();
     glow(ctx, head.x * scale, head.y * scale, shell.color, 18 * scale, 1);
-    const flash = 1 - Math.min(1, (elapsed - LAUNCH) / 500);
+    const flash = 1 - Math.min(1, local / 500);
     if (flash > 0) glow(ctx, shell.x * scale, shell.y0 * scale, shell.color, 26 * scale, flash * 0.8);
   }
 
@@ -161,9 +158,53 @@ export function createNovemberThanks(canvas, textEl) {
     }
   }
 
-  function syncText(elapsed) {
+  function waveShells(n, at, hue0) {
+    const { left, right, ground, h } = band();
+    const look = WAVE_LOOK[n];
+    const shells = [];
+    for (let i = 0; i < n; i++) {
+      const spread = n === 1 ? 0.5 : i / (n - 1);
+      const reach = look.reach[i];
+      shells.push({
+        x: left + (right - left) * (0.06 + spread * 0.88),
+        y0: ground,
+        y1: Math.min(ground - 24, Math.max(reach + 24, h * look.peaks[i])),
+        color: SHELL_COLORS[(hue0 + i) % SHELL_COLORS.length],
+        hue: hue0 + i,
+        reach,
+        sparks: null,
+        launchAt: at + i * 160,
+      });
+    }
+    return shells;
+  }
+
+  function thanksShells() {
+    const { ground, h } = band();
+    const hidden = document.body.classList.contains('panel-hidden')
+      || document.body.classList.contains('buttons-hidden');
+    const w = window.innerWidth;
+    const panelRight = hidden ? 24 : 12 + Math.min(420, w - 24);
+    const globeLeft = w - (w <= 720 ? 140 : 220);
+    const left = panelRight + 56;
+    const right = Math.max(left + 160, globeLeft - 28);
+    const peaks = [0.40, 0.27, 0.42];
+    const reach = [252, 315, 234];
+    return peaks.map((peak, i) => ({
+      x: left + (right - left) * (0.16 + i * 0.34),
+      y0: ground + (i === 1 ? 10 : 0),
+      y1: Math.min(ground - 24, Math.max(reach[i] + 24, h * peak)),
+      color: SHELL_COLORS[i],
+      hue: i,
+      reach: reach[i],
+      sparks: null,
+      launchAt: LAUNCH,
+    }));
+  }
+
+  function syncText(show, elapsed) {
     if (!textEl) return;
-    if (elapsed >= BLOOM && elapsed < TEXT_HOLD_END) {
+    if (elapsed >= LAUNCH + RISE_MS + OPEN_MS && elapsed < TEXT_HOLD_END) {
       if (!show.textOn) {
         show.textOn = true;
         textEl.classList.add('show');
@@ -178,31 +219,69 @@ export function createNovemberThanks(canvas, textEl) {
     }
   }
 
+  function drawShow(show, now) {
+    const elapsed = now - show.t0;
+    if (show.thanks) syncText(show, elapsed);
+    const ctx = canvas.getContext('2d');
+    const scale = canvas.width / Math.max(1, window.innerWidth);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const shell of show.shells) {
+      const local = elapsed - shell.launchAt;
+      if (local < 0 || local > RISE_MS + BLOOM_MS) continue;
+      if (local < RISE_MS) drawRise(ctx, shell, local, scale);
+      else drawBloom(ctx, shell, local - RISE_MS, scale);
+    }
+    ctx.restore();
+  }
+
+  function alive(show, now) {
+    const elapsed = now - show.t0;
+    if (show.thanks && elapsed < DONE) return true;
+    return show.shells.some((shell) => elapsed < shell.launchAt + RISE_MS + BLOOM_MS);
+  }
+
   return {
+    startOpening() {
+      if (!NOVEMBER_THANKS || !november()) return null;
+      if (shows.some((show) => show.kind === 'opening')) return OPENING_FADE;
+      shows.push({
+        kind: 'opening',
+        t0: performance.now(),
+        shells: [
+          ...waveShells(2, 500, 0),
+          ...waveShells(3, 3400, 2),
+          ...waveShells(5, 6600, 5),
+        ],
+        thanks: false,
+        textOn: false,
+      });
+      return OPENING_FADE;
+    },
     start() {
       if (!NOVEMBER_THANKS || !november() || !textEl) return;
+      if (shows.some((show) => show.kind === 'thanks')) return;
       textEl.classList.remove('show');
       textEl.setAttribute('aria-hidden', 'true');
-      show = { t0: performance.now(), shells: layout(), textOn: false };
+      shows.push({
+        kind: 'thanks',
+        t0: performance.now(),
+        shells: thanksShells(),
+        thanks: true,
+        textOn: false,
+      });
     },
     draw(now) {
-      if (!show) return;
-      const elapsed = now - show.t0;
-      syncText(elapsed);
-      if (elapsed >= DONE) {
-        show = null;
-        return;
+      for (let i = shows.length - 1; i >= 0; i--) {
+        if (!alive(shows[i], now)) {
+          if (shows[i].thanks && shows[i].textOn && textEl) {
+            textEl.classList.remove('show');
+            textEl.setAttribute('aria-hidden', 'true');
+          }
+          shows.splice(i, 1);
+        }
       }
-      if (elapsed < LAUNCH || elapsed > 6200) return;
-      const ctx = canvas.getContext('2d');
-      const scale = canvas.width / Math.max(1, window.innerWidth);
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      for (const shell of show.shells) {
-        if (elapsed < RISE_END) drawRise(ctx, shell, elapsed, scale);
-        else drawBloom(ctx, shell, elapsed - RISE_END, scale);
-      }
-      ctx.restore();
+      for (const show of shows) drawShow(show, now);
     },
   };
 }
