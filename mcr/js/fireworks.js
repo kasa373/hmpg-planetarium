@@ -194,9 +194,9 @@ export function createNovemberThanks(canvas, textEl) {
 
   function thanksShells() {
     return [
-      ...waveShells(3, 1000, 0),
-      ...waveShells(5, 4200, 3),
-      ...waveShells(7, 7400, 8),
+      ...waveShells(3, 1000, 0, 0, 1, 120),
+      ...waveShells(9, 4200, 4, 0, 1.3, 80),
+      ...waveShells(6, 7400, 14, 1, 1.2, 80),
     ];
   }
 
