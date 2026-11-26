@@ -31,7 +31,9 @@ const WAVE_LOOK = {
   2: { peaks: [0.36, 0.32], reach: [200, 210] },
   3: { peaks: [0.40, 0.22, 0.38], reach: [170, 220, 180] },
   5: { peaks: [0.42, 0.26, 0.50, 0.24, 0.40], reach: [140, 160, 190, 155, 135] },
+  6: { peaks: [0.42, 0.26, 0.36, 0.18, 0.34, 0.46], reach: [128, 142, 136, 158, 132, 122] },
   7: { peaks: [0.40, 0.24, 0.36, 0.18, 0.38, 0.26, 0.42], reach: [145, 160, 140, 175, 150, 165, 135] },
+  9: { peaks: [0.46, 0.30, 0.38, 0.18, 0.28, 0.22, 0.42, 0.32, 0.48], reach: [118, 128, 124, 148, 120, 136, 130, 126, 114] },
 };
 
 export function createNovemberThanks(canvas, textEl) {
@@ -63,7 +65,7 @@ export function createNovemberThanks(canvas, textEl) {
 
   function ignite(shell) {
     const sparks = [];
-    const outer = 52;
+    const outer = shell.outer || 52;
     for (let i = 0; i < outer; i++) {
       sparks.push({
         a: (i / outer) * Math.PI * 2 + (i % 2) * 0.02,
@@ -74,7 +76,7 @@ export function createNovemberThanks(canvas, textEl) {
         color: bloomColor(shell, i, false),
       });
     }
-    const inner = 26;
+    const inner = shell.innerN || 26;
     for (let i = 0; i < inner; i++) {
       sparks.push({
         a: (i / inner) * Math.PI * 2 + 0.08,
@@ -162,14 +164,16 @@ export function createNovemberThanks(canvas, textEl) {
     }
   }
 
-  function waveShells(n, at, hue0, shift = 0) {
+  function waveShells(n, at, hue0, shift = 0, scale = 1, stagger = 140) {
     const { left, right, ground, h } = band();
     const look = WAVE_LOOK[n];
     const width = right - left;
+    const outer = n >= 9 ? 34 : n >= 6 ? 40 : 48;
+    const innerN = n >= 9 ? 14 : n >= 6 ? 18 : 24;
     const shells = [];
     for (let i = 0; i < n; i++) {
       const spread = n === 1 ? 0.5 : i / (n - 1);
-      const reach = look.reach[i];
+      const reach = Math.round(look.reach[i] * scale);
       const xFrac = Math.min(0.96, Math.max(0.04, 0.06 + spread * 0.88 + shift * 0.07));
       const peak = Math.min(0.56, Math.max(0.16, look.peaks[i] - shift * 0.05));
       shells.push({
@@ -179,8 +183,10 @@ export function createNovemberThanks(canvas, textEl) {
         color: SHELL_COLORS[(hue0 + i) % SHELL_COLORS.length],
         hue: hue0 + i,
         reach,
+        outer,
+        innerN,
         sparks: null,
-        launchAt: at + i * 160,
+        launchAt: at + i * stagger,
       });
     }
     return shells;
@@ -238,12 +244,18 @@ export function createNovemberThanks(canvas, textEl) {
       if (!NOVEMBER_THANKS || !november()) return null;
       if (shows.some((show) => show.kind === 'opening')) return { fade: OPENING_FADE, end: OPENING_FADE };
       const shells = [
-        ...waveShells(2, 500, 0),
-        ...waveShells(2, 1100, 2, 1),
-        ...waveShells(3, 3600, 4),
-        ...waveShells(3, 4200, 7, -1),
-        ...waveShells(5, 6800, 10),
-        ...waveShells(7, 7400, 15),
+        ...waveShells(3, 400, 0, 0, 0.70, 120),
+        ...waveShells(3, 2400, 3, 1, 0.84, 120),
+        ...waveShells(3, 4400, 6, -1, 0.98, 120),
+        ...waveShells(6, 7900, 9, 0, 1.08, 70),
+        ...waveShells(6, 8900, 15, 1, 1.18, 70),
+        ...waveShells(6, 9900, 21, -1, 1.28, 70),
+        ...waveShells(3, 11700, 27, 0, 1.36, 40),
+        ...waveShells(9, 11950, 30, 1, 1.48, 28),
+        ...waveShells(6, 12200, 39, -1, 1.42, 28),
+        ...waveShells(3, 12450, 45, 1, 1.54, 40),
+        ...waveShells(9, 12700, 48, -1, 1.66, 28),
+        ...waveShells(6, 12950, 57, 0, 1.58, 28),
       ];
       shows.push({
         kind: 'opening',
