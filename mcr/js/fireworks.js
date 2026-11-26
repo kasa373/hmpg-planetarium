@@ -1,4 +1,4 @@
-// 2026年11月の花火。戻すときは NOVEMBER_THANKS を false にする。
+// 開きの花火は11月と12月（年は問わない）。再生の花火は2026年の11月と12月。戻すときは NOVEMBER_THANKS を false にする。
 export const NOVEMBER_THANKS = true;
 
 const LAUNCH = 1000;
@@ -39,9 +39,19 @@ const WAVE_LOOK = {
 export function createNovemberThanks(canvas, textEl) {
   const shows = [];
 
-  function november() {
-    const t = new Date(Date.now() + 9 * 3600000);
-    return t.getUTCFullYear() === 2026 && t.getUTCMonth() === 10;
+  function jstNow() {
+    return new Date(Date.now() + 9 * 3600000);
+  }
+
+  function openingSeason() {
+    const month = jstNow().getUTCMonth();
+    return month === 10 || month === 11;
+  }
+
+  function playSeason() {
+    const t = jstNow();
+    const month = t.getUTCMonth();
+    return t.getUTCFullYear() === 2026 && (month === 10 || month === 11);
   }
 
   function band() {
@@ -241,7 +251,7 @@ export function createNovemberThanks(canvas, textEl) {
 
   return {
     startOpening() {
-      if (!NOVEMBER_THANKS || !november()) return null;
+      if (!NOVEMBER_THANKS || !openingSeason()) return null;
       if (shows.some((show) => show.kind === 'opening')) return { fade: OPENING_FADE, end: OPENING_FADE };
       const shells = [
         ...waveShells(3, 400, 0, 0, 0.70, 120),
@@ -271,7 +281,7 @@ export function createNovemberThanks(canvas, textEl) {
       };
     },
     start() {
-      if (!NOVEMBER_THANKS || !november() || !textEl) return;
+      if (!NOVEMBER_THANKS || !playSeason() || !textEl) return;
       if (shows.some((show) => show.kind === 'thanks')) return;
       textEl.classList.remove('show');
       textEl.setAttribute('aria-hidden', 'true');
